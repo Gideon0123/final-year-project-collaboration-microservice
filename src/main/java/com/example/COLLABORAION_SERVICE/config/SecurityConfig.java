@@ -1,5 +1,7 @@
 package com.example.COLLABORAION_SERVICE.config;
 
+import com.example.COLLABORAION_SERVICE.security.CustomAccessDeniedHandler;
+import com.example.COLLABORAION_SERVICE.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
