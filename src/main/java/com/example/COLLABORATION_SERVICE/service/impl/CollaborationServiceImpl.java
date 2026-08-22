@@ -105,12 +105,12 @@ public class CollaborationServiceImpl implements CollaborationService {
 
         connectionRepository.save(connection);
 
-        producer.publishRequestAccepted(
-                CollaborationRequestAcceptedEvent.builder()
-                        .senderId(request.getSenderId())
-                        .receiverId(request.getReceiverId())
-                        .build()
-        );
+//        producer.publishRequestAccepted(
+//                CollaborationRequestAcceptedEvent.builder()
+//                        .senderId(request.getSenderId())
+//                        .receiverId(request.getReceiverId())
+//                        .build()
+//        );
 
         return mapper.toResponse(request);
     }
@@ -126,6 +126,12 @@ public class CollaborationServiceImpl implements CollaborationService {
                         )
                 );
 
+        if (request.getReceiverId() == null) {
+            throw new BadRequestException(
+                    "Collaboration request has no receiver assigned"
+            );
+        }
+
         if(!request.getReceiverId().equals(currentUserId)) {
             throw new AccessDeniedException("Unauthorized");
         }
@@ -139,12 +145,12 @@ public class CollaborationServiceImpl implements CollaborationService {
 
 //        NO CONNECTION
 
-        producer.publishRequestRejected(
-                CollaborationRequestRejectedEvent.builder()
-                        .senderId(request.getSenderId())
-                        .receiverId(request.getReceiverId())
-                        .build()
-        );
+//        producer.publishRequestRejected(
+//                CollaborationRequestRejectedEvent.builder()
+//                        .senderId(request.getSenderId())
+//                        .receiverId(request.getReceiverId())
+//                        .build()
+//        );
 
         return mapper.toResponse(request);
     }

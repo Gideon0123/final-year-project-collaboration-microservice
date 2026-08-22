@@ -1,6 +1,7 @@
 package com.example.COLLABORATION_SERVICE.repository;
 
 import com.example.COLLABORATION_SERVICE.entity.CollaborationRequest;
+import com.example.COLLABORATION_SERVICE.enums.CollaborationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,11 @@ import java.util.Optional;
 public interface CollaborationRequestRepository
         extends JpaRepository<CollaborationRequest, Long> {
 
+    boolean existsBySenderIdAndReceiverId(
+            Long senderId,
+            Long receiverId
+    );
+
     Page<CollaborationRequest> findBySenderId(
             Long senderId,
             Pageable pageable
@@ -22,14 +28,15 @@ public interface CollaborationRequestRepository
             Pageable pageable
     );
 
-    Optional<CollaborationRequest>
-    findBySenderIdAndReceiverId(
+    Page<CollaborationRequest> findBySenderIdAndStatus(
             Long senderId,
-            Long receiverId
+            CollaborationStatus status,
+            Pageable pageable
     );
 
-    boolean existsBySenderIdAndReceiverId(
-            Long senderId,
-            Long receiverId
+    Page<CollaborationRequest> findByReceiverIdAndStatus(
+            Long receiverId,
+            CollaborationStatus status,
+            Pageable pageable
     );
 }

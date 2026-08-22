@@ -24,7 +24,7 @@ public class CollaborationController {
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<CollaborationRequestResponse>> sendRequest(
             @RequestHeader("X-USER-ID") Long senderId,
-            @Valid SendRequestDto dto,
+            @Valid @RequestBody SendRequestDto dto,
             HttpServletRequest request
     ) {
         CollaborationRequestResponse response = collaborationService.sendRequest(senderId, dto);
