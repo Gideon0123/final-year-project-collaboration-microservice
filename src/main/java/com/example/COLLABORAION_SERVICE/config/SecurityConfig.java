@@ -1,5 +1,6 @@
 package com.example.COLLABORAION_SERVICE.config;
 
+import com.example.COLLABORAION_SERVICE.filter.GatewayAuthenticationFilter;
 import com.example.COLLABORAION_SERVICE.security.CustomAccessDeniedHandler;
 import com.example.COLLABORAION_SERVICE.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
