@@ -39,4 +39,10 @@ public interface CollaborationRequestRepository
             CollaborationStatus status,
             Pageable pageable
     );
+
+    boolean existsBySenderIdAndReceiverIdAndStatus(
+            Long senderId,
+            Long receiverId,
+            CollaborationStatus status
+    );
 }
