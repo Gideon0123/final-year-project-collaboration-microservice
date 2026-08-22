@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface CollaborationRequestRepository
         extends JpaRepository<CollaborationRequest, Long> {
@@ -18,5 +20,16 @@ public interface CollaborationRequestRepository
     Page<CollaborationRequest> findByReceiverId(
             Long receiverId,
             Pageable pageable
+    );
+
+    Optional<CollaborationRequest>
+    findBySenderIdAndReceiverId(
+            Long senderId,
+            Long receiverId
+    );
+
+    boolean existsBySenderIdAndReceiverId(
+            Long senderId,
+            Long receiverId
     );
 }
