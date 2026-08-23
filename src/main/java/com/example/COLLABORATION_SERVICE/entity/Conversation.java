@@ -17,6 +17,10 @@ import java.util.Set;
 @Builder
 public class Conversation extends BaseEntity {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String name;
 
     private boolean groupChat;
