@@ -25,13 +25,17 @@ public class Conversation extends BaseEntity {
 
     private boolean groupChat;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "conversation_participants",
-            joinColumns = @JoinColumn(name = "conversation_id")
+    @Column(
+            name = "participant_one_id",
+            nullable = false
     )
-    @Column(name = "user_id")
-    private Set<Long> participants = new HashSet<>();
+    private Long participantOneId;
+
+    @Column(
+            name = "participant_two_id",
+            nullable = false
+    )
+    private Long participantTwoId;
 
     private LocalDateTime lastMessageAt;
 

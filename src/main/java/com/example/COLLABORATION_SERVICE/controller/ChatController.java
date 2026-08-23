@@ -3,6 +3,7 @@ package com.example.COLLABORATION_SERVICE.controller;
 import com.example.COLLABORATION_SERVICE.dto.ChatMessageRequest;
 import com.example.COLLABORATION_SERVICE.dto.DeliveryReceiptRequest;
 import com.example.COLLABORATION_SERVICE.dto.ReadReceiptRequest;
+import com.example.COLLABORATION_SERVICE.dto.TypingEvent;
 import com.example.COLLABORATION_SERVICE.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -38,6 +39,17 @@ public class ChatController {
     ) {
         chatService.markAsRead(
                 request.getMessageId()
+        );
+    }
+
+    @MessageMapping("/chat.typing")
+    public void typing(
+            TypingEvent event
+    ) {
+        messagingTemplate.convertAndSendToUser(
+                event.getReceiverId().toString(),
+                "/queue/typing",
+                event
         );
     }
 }

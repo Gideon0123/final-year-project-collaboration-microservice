@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -27,18 +29,15 @@ public class ConversationServiceImpl implements ConversationService {
                         first,
                         second
                 )
-                .orElseGet(() -> {Conversation conversation = Conversation.builder()
-                        .participantOneId(first)
-                        .participantTwoId(second)
-                        .build();
+                .orElseGet(() -> {
+                    Conversation conversation =
+                            Conversation.builder()
+                                    .participantOneId(first)
+                                    .participantTwoId(second)
+                                    .lastMessageAt(LocalDateTime.now())
+                                    .build();
 
                     return conversationRepository.save(conversation);
                 });
-
-//        messagingTemplate.convertAndSendToUser(
-//                receiverId.toString(),
-//                "/queue/messages",
-//                response
-//        );
     }
 }

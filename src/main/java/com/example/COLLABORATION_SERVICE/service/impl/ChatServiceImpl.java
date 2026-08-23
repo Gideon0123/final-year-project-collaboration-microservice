@@ -2,6 +2,8 @@ package com.example.COLLABORATION_SERVICE.service.impl;
 
 import com.example.COLLABORATION_SERVICE.dto.ChatMessageRequest;
 import com.example.COLLABORATION_SERVICE.dto.ChatMessageResponse;
+import com.example.COLLABORATION_SERVICE.dto.DeliveryReceiptResponse;
+import com.example.COLLABORATION_SERVICE.dto.ReadReceiptResponse;
 import com.example.COLLABORATION_SERVICE.entity.Conversation;
 import com.example.COLLABORATION_SERVICE.entity.Message;
 import com.example.COLLABORATION_SERVICE.enums.MessageStatus;
@@ -9,6 +11,7 @@ import com.example.COLLABORATION_SERVICE.exception.ResourceNotFoundException;
 import com.example.COLLABORATION_SERVICE.repository.ConversationRepository;
 import com.example.COLLABORATION_SERVICE.repository.MessageRepository;
 import com.example.COLLABORATION_SERVICE.service.ChatService;
+import com.example.COLLABORATION_SERVICE.service.ConversationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -24,15 +27,15 @@ public class ChatServiceImpl implements ChatService {
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ConversationService conversationService;
 
     @Override
     public void sendMessage(
             ChatMessageRequest request
     ) {
-        Conversation conversation = conversationRepository.findById(request.getConversationId()
-        ).orElseThrow(() -> new ResourceNotFoundException(
-                        "Conversation not found"
-                )
+        Conversation conversation = conversationService.getOrCreateConversation(
+                request.getSenderId(),
+                request.getReceiverId()
         );
 
         Message message = Message.builder()
@@ -77,13 +80,19 @@ public class ChatServiceImpl implements ChatService {
                 ));
 
         message.setStatus(MessageStatus.DELIVERED);
-
         messageRepository.save(message);
+
+        DeliveryReceiptResponse response =
+                DeliveryReceiptResponse.builder()
+                        .messageId(messageId)
+                        .status(MessageStatus.DELIVERED)
+                        .receiverId(message.getReceiverId())
+                        .build();
 
         messagingTemplate.convertAndSendToUser(
                 message.getSenderId().toString(),
                 "/queue/delivered",
-                messageId
+                response
         );
     }
 
@@ -96,13 +105,19 @@ public class ChatServiceImpl implements ChatService {
                 ));
 
         message.setStatus(MessageStatus.READ);
-
         messageRepository.save(message);
+
+        ReadReceiptResponse response =
+                ReadReceiptResponse.builder()
+                        .messageId(messageId)
+                        .status(MessageStatus.DELIVERED)
+                        .readerId(message.getReceiverId())
+                        .build();
 
         messagingTemplate.convertAndSendToUser(
                 message.getSenderId().toString(),
                 "/queue/read",
-                messageId
+                response
         );
     }
 }
