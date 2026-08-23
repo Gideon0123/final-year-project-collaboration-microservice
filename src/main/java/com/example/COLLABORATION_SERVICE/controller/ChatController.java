@@ -7,7 +7,6 @@ import com.example.COLLABORATION_SERVICE.dto.TypingEvent;
 import com.example.COLLABORATION_SERVICE.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -17,7 +16,6 @@ import java.security.Principal;
 public class ChatController {
 
     private final ChatService chatService;
-    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat.send")
     public void sendMessage(

@@ -1,7 +1,7 @@
 package com.example.COLLABORATION_SERVICE.config;
 
-import com.example.COLLABORATION_SERVICE.component.WebSocketAuthenticationInterceptor;
 import com.example.COLLABORATION_SERVICE.component.WebSocketHandshakeInterceptor;
+import com.example.COLLABORATION_SERVICE.security.JwtChannelInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -15,22 +15,16 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final WebSocketHandshakeInterceptor handshakeInterceptor;
-    private final WebSocketAuthenticationInterceptor authenticationInterceptor;
+    private final JwtChannelInterceptor jwtChannelInterceptor;
+    private final WebSocketHandshakeInterceptor webSocketHandshakeInterceptor;
 
     @Override
     public void registerStompEndpoints(
             StompEndpointRegistry registry
     ) {
-        registry.addEndpoint(
-                        "/ws"
-                )
-                .addInterceptors(
-                        handshakeInterceptor
-                )
-                .setAllowedOriginPatterns(
-                        "http://localhost:3000"
-                );
+        registry.addEndpoint("/ws")
+                .addInterceptors(webSocketHandshakeInterceptor)
+                .setAllowedOriginPatterns("http://localhost:3000");
     }
 
     @Override
@@ -41,13 +35,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 "/app"
         );
 
+        registry.setUserDestinationPrefix(
+                "/user"
+        );
+
         registry.enableSimpleBroker(
                 "/topic",
                 "/queue"
-        );
-
-        registry.setUserDestinationPrefix(
-                "/user"
         );
     }
 
@@ -57,7 +51,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     ) {
 
         registration.interceptors(
-                authenticationInterceptor
+                jwtChannelInterceptor
         );
     }
 }

@@ -35,14 +35,19 @@ public class ChatServiceImpl implements ChatService {
     private Long getAuthenticatedUserId(
             Principal principal
     ) {
-        if (!(principal instanceof WebSocketUserPrincipal user)) {
-
+        if (principal == null) {
             throw new AccessDeniedException(
-                    "Authenticated WebSocket user not found"
+                    "WebSocket user is not authenticated"
             );
         }
 
-        return user.getUserId();
+        if (!(principal instanceof WebSocketUserPrincipal)) {
+            throw new AccessDeniedException(
+                    "Invalid WebSocket principal"
+            );
+        }
+
+        return ((WebSocketUserPrincipal) principal).getUserId();
     }
 
     @Override

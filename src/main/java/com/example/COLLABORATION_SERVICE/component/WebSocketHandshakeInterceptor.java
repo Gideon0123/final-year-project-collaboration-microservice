@@ -1,22 +1,21 @@
 package com.example.COLLABORATION_SERVICE.component;
 
 import com.example.COLLABORATION_SERVICE.security.CollaborationJwtService;
-import com.example.COLLABORATION_SERVICE.utils.WebSocketUserPrincipal;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
-import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import java.util.List;
 import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
+public class WebSocketHandshakeInterceptor
+        implements HandshakeInterceptor {
 
     private final CollaborationJwtService jwtService;
 
@@ -27,27 +26,10 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
             WebSocketHandler wsHandler,
             Map<String, Object> attributes
     ) {
-        if (!(request instanceof ServletServerHttpRequest servletRequest)) {
-            return false;
-        }
 
-        HttpServletRequest httpRequest = servletRequest.getServletRequest();
-        Cookie[] cookies = httpRequest.getCookies();
+        String token = extractAccessToken(request);
 
-        if (cookies == null) {
-            return false;
-        }
-
-        String token = null;
-
-        for (Cookie cookie : cookies) {
-            if ("accessToken".equals(cookie.getName())) {
-                token = cookie.getValue();
-                break;
-            }
-        }
-
-        if (token == null || token.isBlank()) {
+        if (token == null) {
             return false;
         }
 
@@ -55,20 +37,16 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
             return false;
         }
 
-        Long userId = jwtService.extractUserId(token);
-        String username = jwtService.extractUsername(token);
-        String role = jwtService.extractRole(token);
+        Long userId =
+                jwtService.extractUserId(token);
 
-        WebSocketUserPrincipal principal = new WebSocketUserPrincipal(
-                userId,
-                username,
-                role
-        );
+        String username = jwtService.extractUsername(token);
+
+        String role = jwtService.extractRole(token);
 
         attributes.put("userId", userId);
         attributes.put("username", username);
         attributes.put("role", role);
-        attributes.put("principal", principal);
 
         return true;
     }
@@ -81,5 +59,38 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
             Exception exception
     ) {
         // Nothing required here.
+    }
+
+    private String extractAccessToken(
+            ServerHttpRequest request
+    ) {
+        HttpHeaders headers = request.getHeaders();
+
+        List<String> cookieHeaders = headers.get(HttpHeaders.COOKIE);
+
+        if (cookieHeaders == null) {
+            return null;
+        }
+
+        for (String cookieHeader : cookieHeaders) {
+
+            String[] cookies =
+                    cookieHeader.split(";");
+
+            for (String cookie : cookies) {
+
+                String trimmed =
+                        cookie.trim();
+
+                if (trimmed.startsWith("accessToken=")) {
+
+                    return trimmed.substring(
+                            "accessToken=".length()
+                    );
+                }
+            }
+        }
+
+        return null;
     }
 }
