@@ -255,7 +255,7 @@ public class CollaborationController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy
     ) {
-        int adjustedPage = Math.max(page - 1, 0);
+//        int adjustedPage = Math.max(page - 1, 0);
         return ResponseEntity.ok(
                 collaborationService.searchResearchers(
                         keyword,
@@ -271,7 +271,7 @@ public class CollaborationController {
                         accountNonLocked,
                         createdAfter,
                         createdBefore,
-                        adjustedPage,
+                        page,
                         size,
                         sortBy
                 )
@@ -280,9 +280,9 @@ public class CollaborationController {
 
     @GetMapping("/researchers/{researcherId}")
     public ResponseEntity<ApiResponse<ResearcherProfileResponse>> getProfile(
-            @RequestHeader("X-USER-ID") Long currentUserId,
+            @RequestHeader("X-User-Id") Long currentUserId,
             @PathVariable Long researcherId,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             HttpServletRequest request

@@ -1,5 +1,6 @@
 package com.example.COLLABORATION_SERVICE.feign;
 
+import com.example.COLLABORATION_SERVICE.config.FeignConfig;
 import com.example.COLLABORATION_SERVICE.dto.ApiResponse;
 import com.example.COLLABORATION_SERVICE.dto.UserProfileResponse;
 import com.example.COLLABORATION_SERVICE.enums.AccountStatus;
@@ -13,10 +14,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 
-@FeignClient(name = "AUTH-SERVICE")
+@FeignClient(
+        name = "AUTH-SERVICE",
+        configuration = FeignConfig.class
+)
 public interface AuthClient {
 
-    @GetMapping("/admin/users/search")
+    @GetMapping("/users/internal/search")
     ApiResponse<PagedResponse<UserProfileResponse>> searchUsers(
 
             @RequestParam(required = false) String keyword,
@@ -39,7 +43,7 @@ public interface AuthClient {
             @RequestParam(defaultValue = "id") String sortBy
     );
 
-    @GetMapping("/users/{id}")
+    @GetMapping("/users/internals/{id}")
     ApiResponse<UserProfileResponse> getUser(
             @PathVariable Long id
     );

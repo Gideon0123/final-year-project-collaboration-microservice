@@ -307,7 +307,7 @@ public class CollaborationServiceImpl implements CollaborationService {
         ).getData();
 
         ApiResponse<PagedResponse<ResearchPaperResponse>> papers = researchClient.getPapersByAuthor(
-                researcherId, page, size, sortBy
+                researcherId, page, size, sortBy, "desc"
         );
 
         boolean connected = connectionRepository
