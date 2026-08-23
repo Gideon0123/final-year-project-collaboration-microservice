@@ -4,7 +4,6 @@ import com.example.COLLABORATION_SERVICE.dto.*;
 import com.example.COLLABORATION_SERVICE.enums.AccountStatus;
 import com.example.COLLABORATION_SERVICE.enums.Role;
 import com.example.COLLABORATION_SERVICE.payload.PagedResponse;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 
