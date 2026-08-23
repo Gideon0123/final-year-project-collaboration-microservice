@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -54,8 +53,6 @@ public class CollaborationServiceImpl implements CollaborationService {
         return PageRequest.of(page, size, sort);
     }
 
-
-
     @Transactional
     @Override
     public CollaborationRequestResponse sendRequest(
@@ -72,10 +69,15 @@ public class CollaborationServiceImpl implements CollaborationService {
             throw new BadRequestException("Request already exists");
         }
 
-        boolean alreadyConnected = connectionRepository.existsByUserOneIdAndUserTwoId(
+        boolean alreadyConnected = connectionRepository.connectionExists(
                 senderId,
                 dto.receiverId()
         );
+//                ||
+//                connectionRepository.existsByUserOneIdAndUserTwoId(
+//                        dto.receiverId(),
+//                        senderId
+//                );
 
         if(alreadyConnected) {
             throw new BadRequestException("Already connected");
@@ -295,36 +297,43 @@ public class CollaborationServiceImpl implements CollaborationService {
     @Override
     public ResearcherProfileResponse getResearcherProfile(
             Long currentUserId,
-            Long researcherId
+            Long researcherId,
+            int page,
+            int size,
+            String sortBy
     ) {
         UserProfileResponse user = authClient.getUser(
                 researcherId
         ).getData();
 
-        List<ResearchPaperResponse> papers =
-                researchClient.getPapersByAuthor(
-                        researcherId
-                );
+        ApiResponse<PagedResponse<ResearchPaperResponse>> papers = researchClient.getPapersByAuthor(
+                researcherId, page, size, sortBy
+        );
 
         boolean connected = connectionRepository
-                .existsByUserOneIdAndUserTwoId(
+                .connectionExists(
                         currentUserId,
                         researcherId
-                ) || connectionRepository.existsByUserOneIdAndUserTwoId(
-                researcherId,
-                currentUserId
-        );
+                );
+//                || connectionRepository.existsByUserOneIdAndUserTwoId(
+//                researcherId,
+//                currentUserId
+//        );
 
         boolean pending = requestRepository.existsBySenderIdAndReceiverIdAndStatus(
                 currentUserId,
                 researcherId,
+                CollaborationStatus.PENDING
+        ) || requestRepository.existsBySenderIdAndReceiverIdAndStatus(
+                researcherId,
+                currentUserId,
                 CollaborationStatus.PENDING
         );
 
         return ResearcherProfileResponse
                 .builder()
                 .user(user)
-                .papers(papers)
+                .papers(papers.getData())
                 .connected(connected)
                 .pendingRequest(pending)
                 .build();

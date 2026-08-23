@@ -1,15 +1,15 @@
 package com.example.COLLABORATION_SERVICE.controller;
 
-import com.example.COLLABORATION_SERVICE.dto.ApiResponse;
-import com.example.COLLABORATION_SERVICE.dto.CollaborationRequestResponse;
-import com.example.COLLABORATION_SERVICE.dto.ConnectionResponse;
-import com.example.COLLABORATION_SERVICE.dto.SendRequestDto;
+import com.example.COLLABORATION_SERVICE.dto.*;
+import com.example.COLLABORATION_SERVICE.enums.AccountStatus;
+import com.example.COLLABORATION_SERVICE.enums.Role;
 import com.example.COLLABORATION_SERVICE.payload.PagedResponse;
 import com.example.COLLABORATION_SERVICE.service.CollaborationService;
 import com.example.COLLABORATION_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -201,10 +201,6 @@ public class CollaborationController {
             @RequestHeader("X-USER-ID") Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-//            @RequestParam String sortBy,
-//            @RequestParam String sortDirection,
-//            @RequestParam(defaultValue = "createdAt") String sortBy,
-//            @RequestParam(defaultValue = "desc") String sortDirection,
             HttpServletRequest request
     ) {
         int adjustedPage = Math.max(page - 1, 0);
@@ -228,6 +224,77 @@ public class CollaborationController {
                 ApiResponse.<PagedResponse<ConnectionResponse>>builder()
                         .success(true)
                         .message("Connections fetched successfully")
+                        .status(HttpStatus.OK.value())
+                        .data(response)
+                        .errors(null)
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
+    @GetMapping("/researchers/search")
+    public ResponseEntity<ApiResponse<PagedResponse<UserProfileResponse>>> searchResearchers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phoneNo,
+            @RequestParam(required = false) Role role,
+            @RequestParam(required = false) AccountStatus status,
+            @RequestParam(required = false) Boolean emailVerified,
+            @RequestParam(required = false) Boolean accountNonLocked,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime createdAfter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime createdBefore,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy
+    ) {
+        int adjustedPage = Math.max(page - 1, 0);
+        return ResponseEntity.ok(
+                collaborationService.searchResearchers(
+                        keyword,
+                        id,
+                        firstName,
+                        lastName,
+                        username,
+                        email,
+                        phoneNo,
+                        role,
+                        status,
+                        emailVerified,
+                        accountNonLocked,
+                        createdAfter,
+                        createdBefore,
+                        adjustedPage,
+                        size,
+                        sortBy
+                )
+        );
+    }
+
+    @GetMapping("/researchers/{researcherId}")
+    public ResponseEntity<ApiResponse<ResearcherProfileResponse>> getProfile(
+            @RequestHeader("X-USER-ID") Long currentUserId,
+            @PathVariable Long researcherId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            HttpServletRequest request
+    ) {
+        ResearcherProfileResponse response = collaborationService.getResearcherProfile(
+                currentUserId, researcherId, page, size, sortBy
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.<ResearcherProfileResponse>builder()
+                        .success(true)
+                        .message("Researcher profile fetched successfully")
                         .status(HttpStatus.OK.value())
                         .data(response)
                         .errors(null)

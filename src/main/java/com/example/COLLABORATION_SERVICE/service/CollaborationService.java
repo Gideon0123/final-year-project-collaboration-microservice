@@ -78,6 +78,9 @@ public interface CollaborationService {
 
     ResearcherProfileResponse getResearcherProfile(
             Long currentUserId,
-            Long researcherId
+            Long researcherId,
+            int page,
+            int size,
+            String sortBy
     );
 }
