@@ -16,67 +16,57 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PresenceService {
 
+    private static final String USER_SESSION_KEY_PREFIX = "collaboration:presence:user:";
+    private static final String SESSION_KEY_SUFFIX = ":sessions";
     private final RedisTemplate<String, String> presenceRedisTemplate;
     private final ConversationRepository conversationRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private static final String ONLINE_USERS_KEY = "collaboration:presence:online-users";
-
-    public void online(
-            Long userId,
-            String username
-    ) {
-        presenceRedisTemplate.opsForSet()
-                .add(ONLINE_USERS_KEY, userId.toString());
-
-        broadcastPresence(
-                userId,
-                username,
-                PresenceStatus.ONLINE
-        );
-    }
-
-    public void offline(
-            Long userId,
-            String username
-    ) {
-        presenceRedisTemplate.opsForSet()
-                .remove(ONLINE_USERS_KEY, userId.toString());
-
-        broadcastPresence(
-                userId,
-                username,
-                PresenceStatus.OFFLINE
-        );
-    }
 
     public void connect(
             Long userId,
             String username,
             String sessionId
-    ){
+    ) {
+        String sessionKey = buildSessionKey(userId);
 
+        Long previousSessionCount = presenceRedisTemplate.opsForSet().size(sessionKey);
+        presenceRedisTemplate.opsForSet().add(sessionKey, sessionId);
+
+        if (previousSessionCount == null || previousSessionCount == 0) {
+            broadcastPresence(userId, username, PresenceStatus.ONLINE);
+        }
     }
 
     public void disconnect(
             Long userId,
             String username,
             String sessionId
-    ){
+    ) {
+        String sessionKey = buildSessionKey(userId);
+        presenceRedisTemplate.opsForSet().remove(sessionKey, sessionId);
 
+        Long remainingSessions = presenceRedisTemplate.opsForSet().size(sessionKey);
+
+        if (remainingSessions == null || remainingSessions == 0) {
+
+            presenceRedisTemplate.delete(sessionKey);
+            broadcastPresence(userId, username, PresenceStatus.OFFLINE);
+        }
     }
 
     public boolean isOnline(
             Long userId
     ) {
+        String sessionKey = buildSessionKey(userId);
+        Long sessionCount = presenceRedisTemplate.opsForSet().size(sessionKey);
 
-        Boolean member = presenceRedisTemplate
-                .opsForSet()
-                .isMember(
-                        ONLINE_USERS_KEY,
-                        userId.toString()
-                );
+        return sessionCount != null && sessionCount > 0;
+    }
 
-        return Boolean.TRUE.equals(member);
+    private String buildSessionKey(
+            Long userId
+    ) {
+        return USER_SESSION_KEY_PREFIX + userId + SESSION_KEY_SUFFIX;
     }
 
     private void broadcastPresence(
@@ -91,17 +81,16 @@ public class PresenceService {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        List<Conversation> conversations = conversationRepository.findUserConversations(
-                userId
-        );
+        List<Conversation> conversations = conversationRepository.
+                findUserConversations(userId);
 
         for (Conversation conversation : conversations) {
-
-            Long otherUser = conversation.getParticipantOneId().equals(userId)
-                    ?
-                    conversation.getParticipantTwoId()
-                    :
-                    conversation.getParticipantOneId();
+            Long otherUser;
+            if (conversation.getParticipantOneId().equals(userId)) {
+                otherUser = conversation.getParticipantTwoId();
+            } else {
+                otherUser = conversation.getParticipantOneId();
+            }
 
             messagingTemplate.convertAndSendToUser(
                     otherUser.toString(),
@@ -110,5 +99,4 @@ public class PresenceService {
             );
         }
     }
-
 }

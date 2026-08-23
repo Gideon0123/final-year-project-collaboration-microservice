@@ -1,6 +1,7 @@
 package com.example.COLLABORATION_SERVICE.config;
 
-import com.example.COLLABORATION_SERVICE.security.JwtChannelInterceptor;
+import com.example.COLLABORATION_SERVICE.component.WebSocketAuthenticationInterceptor;
+import com.example.COLLABORATION_SERVICE.component.WebSocketHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -14,37 +15,50 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final JwtChannelInterceptor jwtChannelInterceptor;
-
-    @Override
-    public void configureMessageBroker(
-            MessageBrokerRegistry registry
-    ) {
-        registry.enableSimpleBroker(
-                "/topic",
-                "/queue"
-        );
-
-        registry.setApplicationDestinationPrefixes("/app");
-
-        registry.setUserDestinationPrefix("/user");
-    }
+    private final WebSocketHandshakeInterceptor handshakeInterceptor;
+    private final WebSocketAuthenticationInterceptor authenticationInterceptor;
 
     @Override
     public void registerStompEndpoints(
             StompEndpointRegistry registry
     ) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+        registry.addEndpoint(
+                        "/ws"
+                )
+                .addInterceptors(
+                        handshakeInterceptor
+                )
+                .setAllowedOriginPatterns(
+                        "http://localhost:3000"
+                );
+    }
 
+    @Override
+    public void configureMessageBroker(
+            MessageBrokerRegistry registry
+    ) {
+        registry.setApplicationDestinationPrefixes(
+                "/app"
+        );
+
+        registry.enableSimpleBroker(
+                "/topic",
+                "/queue"
+        );
+
+        registry.setUserDestinationPrefix(
+                "/user"
+        );
     }
 
     @Override
     public void configureClientInboundChannel(
             ChannelRegistration registration
     ) {
+
         registration.interceptors(
-                jwtChannelInterceptor
+                authenticationInterceptor
         );
     }
-//    ws://localhost:8086/ws
 }
+//    ws://localhost:8086/ws

@@ -16,6 +16,16 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             Long participantTwoId
     );
 
+//    @Query("""
+//        SELECT c
+//        FROM Conversation c
+//        WHERE c.participantOneId = :userId
+//           OR c.participantTwoId = :userId
+//    """)
+//    List<Conversation> findUserConversations(
+//            @Param("userId") Long userId
+//    );
+
     @Query("""
        SELECT c
        FROM Conversation c
