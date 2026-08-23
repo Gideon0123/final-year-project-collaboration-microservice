@@ -27,13 +27,13 @@ public class GlobalExceptionHandler {
         return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), request);
     }
 
-//    @ExceptionHandler(ReviewAuthorizationException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleUnauthorizedReview(
-//            ReviewAuthorizationException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.FORBIDDEN.value(), request);
-//    }
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUnauthorizedReview(
+            InvalidTokenException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
+    }
 
 //    @ExceptionHandler(InvalidReviewStateException.class)
 //    public ResponseEntity<ApiResponse<Object>> handleInvalidReview(

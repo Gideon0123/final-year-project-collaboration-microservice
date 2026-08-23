@@ -1,83 +1,114 @@
 package com.example.COLLABORATION_SERVICE.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import com.example.COLLABORATION_SERVICE.dto.PresenceEvent;
+import com.example.COLLABORATION_SERVICE.entity.Conversation;
+import com.example.COLLABORATION_SERVICE.enums.PresenceStatus;
+import com.example.COLLABORATION_SERVICE.repository.ConversationRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.security.Principal;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
-@Slf4j
+@RequiredArgsConstructor
 public class PresenceService {
 
-    private final Set<Long> onlineUsers = ConcurrentHashMap.newKeySet();
+    private final RedisTemplate<String, String> presenceRedisTemplate;
+    private final ConversationRepository conversationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private static final String ONLINE_USERS_KEY = "collaboration:presence:online-users";
 
-    public void online(Long userId) {
-        onlineUsers.add(userId);
-    }
-
-    public void offline(Long userId) {
-        onlineUsers.remove(userId);
-    }
-
-    public boolean isOnline(Long userId) {
-        return onlineUsers.contains(userId);
-    }
-
-    @EventListener
-    public void handleConnect(
-            SessionConnectedEvent event
+    public void online(
+            Long userId,
+            String username
     ) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(
-                event.getMessage()
+        presenceRedisTemplate.opsForSet()
+                .add(ONLINE_USERS_KEY, userId.toString());
+
+        broadcastPresence(
+                userId,
+                username,
+                PresenceStatus.ONLINE
         );
+    }
 
-        Principal principal = accessor.getUser();
+    public void offline(
+            Long userId,
+            String username
+    ) {
+        presenceRedisTemplate.opsForSet()
+                .remove(ONLINE_USERS_KEY, userId.toString());
 
-        if (principal == null) {
-            return;
-        }
-
-        Long userId =  Long.parseLong(
-                principal.getName()
+        broadcastPresence(
+                userId,
+                username,
+                PresenceStatus.OFFLINE
         );
+    }
 
-        online(userId);
+    public void connect(
+            Long userId,
+            String username,
+            String sessionId
+    ){
 
-        log.info(
-                "User {} connected",
+    }
+
+    public void disconnect(
+            Long userId,
+            String username,
+            String sessionId
+    ){
+
+    }
+
+    public boolean isOnline(
+            Long userId
+    ) {
+
+        Boolean member = presenceRedisTemplate
+                .opsForSet()
+                .isMember(
+                        ONLINE_USERS_KEY,
+                        userId.toString()
+                );
+
+        return Boolean.TRUE.equals(member);
+    }
+
+    private void broadcastPresence(
+            Long userId,
+            String username,
+            PresenceStatus status
+    ) {
+        PresenceEvent event = PresenceEvent.builder()
+                .userId(userId)
+                .username(username)
+                .status(status)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        List<Conversation> conversations = conversationRepository.findUserConversations(
                 userId
         );
-    }
 
-    @EventListener
-    public void handleDisconnect(
-            SessionDisconnectEvent event
-    ) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(
-                event.getMessage()
-        );
+        for (Conversation conversation : conversations) {
 
-        Principal principal = accessor.getUser();
+            Long otherUser = conversation.getParticipantOneId().equals(userId)
+                    ?
+                    conversation.getParticipantTwoId()
+                    :
+                    conversation.getParticipantOneId();
 
-        if (principal == null) {
-            return;
+            messagingTemplate.convertAndSendToUser(
+                    otherUser.toString(),
+                    "/queue/presence",
+                    event
+            );
         }
-
-        Long userId = Long.parseLong(
-                principal.getName()
-        );
-
-        offline(userId);
-
-        log.info(
-                "User {} disconnected",
-                userId
-        );
     }
+
 }

@@ -10,6 +10,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
+
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
@@ -19,37 +21,46 @@ public class ChatController {
 
     @MessageMapping("/chat.send")
     public void sendMessage(
-            ChatMessageRequest request
+            ChatMessageRequest request,
+            Principal principal
     ) {
-        chatService.sendMessage(request);
+        chatService.sendMessage(
+                request,
+                principal
+        );
     }
 
     @MessageMapping("/chat.delivered")
     public void delivered(
-            DeliveryReceiptRequest request
+            DeliveryReceiptRequest request,
+            Principal principal
     ) {
+
         chatService.markAsDelivered(
-                request.getMessageId()
+                request.getMessageId(),
+                principal
         );
     }
 
     @MessageMapping("/chat.read")
     public void read(
-            ReadReceiptRequest request
+            ReadReceiptRequest request,
+            Principal principal
     ) {
+
         chatService.markAsRead(
-                request.getMessageId()
+                request.getMessageId(),
+                principal
         );
     }
 
     @MessageMapping("/chat.typing")
     public void typing(
-            TypingEvent event
+            TypingEvent event,
+            Principal principal
     ) {
-        messagingTemplate.convertAndSendToUser(
-                event.getReceiverId().toString(),
-                "/queue/typing",
-                event
-        );
+
+        // We will correct this properly when we implement
+        // the authenticated typing flow.
     }
 }

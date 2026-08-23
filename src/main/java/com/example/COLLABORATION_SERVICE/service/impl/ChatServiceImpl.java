@@ -7,16 +7,19 @@ import com.example.COLLABORATION_SERVICE.dto.ReadReceiptResponse;
 import com.example.COLLABORATION_SERVICE.entity.Conversation;
 import com.example.COLLABORATION_SERVICE.entity.Message;
 import com.example.COLLABORATION_SERVICE.enums.MessageStatus;
+import com.example.COLLABORATION_SERVICE.exception.AccessDeniedException;
 import com.example.COLLABORATION_SERVICE.exception.ResourceNotFoundException;
 import com.example.COLLABORATION_SERVICE.repository.ConversationRepository;
 import com.example.COLLABORATION_SERVICE.repository.MessageRepository;
 import com.example.COLLABORATION_SERVICE.service.ChatService;
 import com.example.COLLABORATION_SERVICE.service.ConversationService;
+import com.example.COLLABORATION_SERVICE.utils.WebSocketUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 @Service
@@ -29,19 +32,42 @@ public class ChatServiceImpl implements ChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final ConversationService conversationService;
 
+    private Long getAuthenticatedUserId(
+            Principal principal
+    ) {
+        if (!(principal instanceof WebSocketUserPrincipal user)) {
+
+            throw new AccessDeniedException(
+                    "Authenticated WebSocket user not found"
+            );
+        }
+
+        return user.getUserId();
+    }
+
     @Override
     public void sendMessage(
-            ChatMessageRequest request
+            ChatMessageRequest request,
+            Principal principal
     ) {
+        Long senderId = getAuthenticatedUserId(principal);
+        Long receiverId = request.getReceiverId();
+
+        if (senderId.equals(receiverId)) {
+            throw new IllegalArgumentException(
+                    "You cannot send a private message to yourself"
+            );
+        }
+
         Conversation conversation = conversationService.getOrCreateConversation(
-                request.getSenderId(),
-                request.getReceiverId()
+                senderId,
+                receiverId
         );
 
         Message message = Message.builder()
                 .conversation(conversation)
-                .senderId(request.getSenderId())
-                .receiverId(request.getReceiverId())
+                .senderId(senderId)
+                .receiverId(receiverId)
                 .content(request.getContent())
                 .type(request.getType())
                 .status(MessageStatus.SENT)
@@ -64,15 +90,20 @@ public class ChatServiceImpl implements ChatService {
                         .createdAt(message.getCreatedAt())
                         .build();
 
-        messagingTemplate.convertAndSend(
-                "/topic/chatroom/" +
-                        conversation.getId(),
+//        messagingTemplate.convertAndSend(
+//                "/topic/chatroom/" + conversation.getId(),
+//                response
+//        );
+
+        messagingTemplate.convertAndSendToUser(
+                receiverId.toString(),
+                "/queue/messages",
                 response
         );
     }
 
     @Override
-    public void markAsDelivered(Long messageId) {
+    public void markAsDelivered(Long messageId, Principal principal) {
 
         Message message = messageRepository.findById(messageId).
                 orElseThrow(() -> new ResourceNotFoundException(
@@ -97,7 +128,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public void markAsRead(Long messageId) {
+    public void markAsRead(Long messageId, Principal principal) {
 
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException(

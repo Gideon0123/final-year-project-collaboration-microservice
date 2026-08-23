@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 public class ChatMessageRequest {
 
-    private Long senderId;
+//    private Long senderId;
     private Long receiverId;
     private String content;
     private MessageType type;

@@ -15,6 +15,40 @@ public class RedisConfig {
     private final GenericJackson2JsonRedisSerializer serializer;
 
     @Bean
+    public RedisTemplate<String, Object> redisTemplate(
+            RedisConnectionFactory connectionFactory
+    ) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+
+        template.setConnectionFactory(
+                connectionFactory
+        );
+
+        StringRedisSerializer stringSerializer =
+                new StringRedisSerializer();
+
+        template.setKeySerializer(
+                stringSerializer
+        );
+
+        template.setHashKeySerializer(
+                stringSerializer
+        );
+
+        template.setValueSerializer(
+                serializer
+        );
+
+        template.setHashValueSerializer(
+                serializer
+        );
+
+        template.afterPropertiesSet();
+
+        return template;
+    }
+
+    @Bean
     public RedisTemplate<String, String> presenceRedisTemplate(
             RedisConnectionFactory connectionFactory
     ) {
@@ -26,20 +60,23 @@ public class RedisConfig {
                 connectionFactory
         );
 
+        StringRedisSerializer stringSerializer =
+                new StringRedisSerializer();
+
         template.setKeySerializer(
-                new StringRedisSerializer()
+                stringSerializer
         );
 
         template.setHashKeySerializer(
-                new StringRedisSerializer()
+                stringSerializer
         );
 
         template.setValueSerializer(
-                serializer
+                stringSerializer
         );
 
         template.setHashValueSerializer(
-                serializer
+                stringSerializer
         );
 
         template.afterPropertiesSet();

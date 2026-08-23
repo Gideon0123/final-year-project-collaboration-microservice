@@ -21,6 +21,18 @@ public class ConversationServiceImpl implements ConversationService {
             Long userOne,
             Long userTwo
     ) {
+        if (userOne == null || userTwo == null) {
+            throw new IllegalArgumentException(
+                    "Conversation participants cannot be null"
+            );
+        }
+
+        if (userOne.equals(userTwo)) {
+            throw new IllegalArgumentException(
+                    "A conversation requires two different users"
+            );
+        }
+
         Long first = Math.min(userOne, userTwo);
         Long second = Math.max(userOne, userTwo);
 
