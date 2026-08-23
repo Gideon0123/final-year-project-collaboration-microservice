@@ -1,6 +1,8 @@
 package com.example.COLLABORATION_SERVICE.controller;
 
 import com.example.COLLABORATION_SERVICE.dto.ChatMessageRequest;
+import com.example.COLLABORATION_SERVICE.dto.DeliveryReceiptRequest;
+import com.example.COLLABORATION_SERVICE.dto.ReadReceiptRequest;
 import com.example.COLLABORATION_SERVICE.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -19,5 +21,23 @@ public class ChatController {
             ChatMessageRequest request
     ) {
         chatService.sendMessage(request);
+    }
+
+    @MessageMapping("/chat.delivered")
+    public void delivered(
+            DeliveryReceiptRequest request
+    ) {
+        chatService.markAsDelivered(
+                request.getMessageId()
+        );
+    }
+
+    @MessageMapping("/chat.read")
+    public void read(
+            ReadReceiptRequest request
+    ) {
+        chatService.markAsRead(
+                request.getMessageId()
+        );
     }
 }

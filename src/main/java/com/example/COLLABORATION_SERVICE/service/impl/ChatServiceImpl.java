@@ -67,4 +67,42 @@ public class ChatServiceImpl implements ChatService {
                 response
         );
     }
+
+    @Override
+    public void markAsDelivered(Long messageId) {
+
+        Message message = messageRepository.findById(messageId).
+                orElseThrow(() -> new ResourceNotFoundException(
+                        "Message not found"
+                ));
+
+        message.setStatus(MessageStatus.DELIVERED);
+
+        messageRepository.save(message);
+
+        messagingTemplate.convertAndSendToUser(
+                message.getSenderId().toString(),
+                "/queue/delivered",
+                messageId
+        );
+    }
+
+    @Override
+    public void markAsRead(Long messageId) {
+
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Message not found"
+                ));
+
+        message.setStatus(MessageStatus.READ);
+
+        messageRepository.save(message);
+
+        messagingTemplate.convertAndSendToUser(
+                message.getSenderId().toString(),
+                "/queue/read",
+                messageId
+        );
+    }
 }
