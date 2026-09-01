@@ -9,19 +9,23 @@ import com.example.COLLABORATION_SERVICE.entity.Message;
 import com.example.COLLABORATION_SERVICE.enums.MessageStatus;
 import com.example.COLLABORATION_SERVICE.exception.AccessDeniedException;
 import com.example.COLLABORATION_SERVICE.exception.ResourceNotFoundException;
+import com.example.COLLABORATION_SERVICE.payload.PagedResponse;
 import com.example.COLLABORATION_SERVICE.repository.ConversationRepository;
 import com.example.COLLABORATION_SERVICE.repository.MessageRepository;
 import com.example.COLLABORATION_SERVICE.service.ChatService;
 import com.example.COLLABORATION_SERVICE.service.ConversationService;
 import com.example.COLLABORATION_SERVICE.utils.WebSocketUserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -109,19 +113,47 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public void markAsDelivered(Long messageId, Principal principal) {
+    public void markAsDelivered(
+            Long messageId,
+            Principal principal
+    ) {
+        Long authenticatedUserId = getAuthenticatedUserId(principal);
 
-        Message message = messageRepository.findById(messageId).
-                orElseThrow(() -> new ResourceNotFoundException(
-                        "Message not found"
-                ));
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                                "Message not found"
+                        )
+                );
+
+        if (!message.getReceiverId().equals(authenticatedUserId)) {
+
+            throw new AccessDeniedException(
+                    "Only the receiver can mark this message as delivered"
+            );
+        }
+
+        /*
+         * Prevent invalid status transitions.
+         *
+         * A message should normally move:
+         *
+         * SENT -> DELIVERED -> READ
+         */
+        if (message.getStatus() == MessageStatus.READ ||
+                message.getStatus() == MessageStatus.DELIVERED) {
+            return;
+        }
+
+//        if (message.getStatus() == MessageStatus.DELIVERED) {
+//            return;
+//        }
 
         message.setStatus(MessageStatus.DELIVERED);
         messageRepository.save(message);
 
         DeliveryReceiptResponse response =
                 DeliveryReceiptResponse.builder()
-                        .messageId(messageId)
+                        .messageId(message.getId())
                         .status(MessageStatus.DELIVERED)
                         .receiverId(message.getReceiverId())
                         .build();
@@ -134,20 +166,51 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public void markAsRead(Long messageId, Principal principal) {
+    public void markAsRead(
+            Long messageId,
+            Principal principal
+    ) {
+        Long authenticatedUserId = getAuthenticatedUserId(principal);
 
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Message not found"
-                ));
+                                "Message not found"
+                        )
+                );
+
+        if (!message.getReceiverId().equals(authenticatedUserId)) {
+
+            throw new AccessDeniedException(
+                    "Only the receiver can mark this message as read"
+            );
+        }
+
+        /*
+         * If the message is already READ,
+         * there is nothing left to do.
+         */
+        if (message.getStatus() == MessageStatus.READ) {
+            return;
+        }
+
+        /*
+         * A message should normally be DELIVERED
+         * before it becomes READ.
+         */
+        if (message.getStatus() != MessageStatus.DELIVERED) {
+
+            throw new IllegalStateException(
+                    "Message must be delivered before it can be marked as read"
+            );
+        }
 
         message.setStatus(MessageStatus.READ);
         messageRepository.save(message);
 
         ReadReceiptResponse response =
                 ReadReceiptResponse.builder()
-                        .messageId(messageId)
-                        .status(MessageStatus.DELIVERED)
+                        .messageId(message.getId())
+                        .status(MessageStatus.READ)
                         .readerId(message.getReceiverId())
                         .build();
 
@@ -160,18 +223,24 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ChatMessageResponse> getConversationMessages(
+    public PagedResponse<ChatMessageResponse> getConversationMessages(
             Long conversationId,
+            int page,
+            int size,
             Principal principal
     ) {
-
         Long userId = getAuthenticatedUserId(principal);
 
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Conversation not found"
-                ));
+                                "Conversation not found"
+                        )
+                );
 
+        /*
+         * Only participants can retrieve
+         * messages belonging to the conversation.
+         */
         if (!conversation.getParticipantOneId().equals(userId)
                 && !conversation.getParticipantTwoId().equals(userId)) {
 
@@ -180,12 +249,45 @@ public class ChatServiceImpl implements ChatService {
             );
         }
 
-        List<Message> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(
-                conversationId
+        /*
+         * Prevent invalid pagination values.
+         */
+        if (page < 1) {
+            throw new IllegalArgumentException(
+                    "Page must be greater than or equal to 1"
+            );
+        }
+
+        if (size < 1) {
+            throw new IllegalArgumentException(
+                    "Size must be greater than or equal to 1"
+            );
+        }
+
+        /*
+         * Protect the API from someone requesting
+         * an unnecessarily huge page.
+         */
+        if (size > 100) {
+            throw new IllegalArgumentException(
+                    "Page size cannot exceed 100"
+            );
+        }
+
+        Pageable pageable = PageRequest.of(
+                page - 1, size, Sort.by(
+                        Sort.Direction.ASC,
+                        "createdAt"
+                )
         );
 
-        return messages.stream()
-                .map(message ->
+        Page<Message> messagePage = messageRepository.findByConversationId(
+                conversationId,
+                pageable
+        );
+
+        Page<ChatMessageResponse> responsePage =
+                messagePage.map(message ->
                         ChatMessageResponse.builder()
                                 .id(message.getId())
                                 .conversationId(conversation.getId())
@@ -196,7 +298,8 @@ public class ChatServiceImpl implements ChatService {
                                 .status(message.getStatus())
                                 .createdAt(message.getCreatedAt())
                                 .build()
-                )
-                .toList();
+                );
+
+        return new PagedResponse<>(responsePage);
     }
 }

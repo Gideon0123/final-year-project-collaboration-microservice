@@ -103,20 +103,20 @@ public class CollaborationController {
             HttpServletRequest request
     ) {
         int adjustedPage = Math.max(page - 1, 0);
-        PagedResponse<CollaborationRequestResponse> Collaboration =
+        PagedResponse<CollaborationRequestResponse> collaboration =
                 collaborationService.getSentRequests(
                         userId, adjustedPage, size, sortBy, sortDirection
                 );
 
         PagedResponse<CollaborationRequestResponse> response =
                 PagedResponse.<CollaborationRequestResponse>builder()
-                        .content(Collaboration.getContent())
-                        .size(Collaboration.getSize())
-                        .page(Collaboration.getPage())
-                        .first(Collaboration.isFirst())
-                        .last(Collaboration.isLast())
-                        .totalElements(Collaboration.getTotalElements())
-                        .totalPages(Collaboration.getTotalPages())
+                        .content(collaboration.getContent())
+                        .size(collaboration.getSize())
+                        .page(collaboration.getPage())
+                        .first(collaboration.isFirst())
+                        .last(collaboration.isLast())
+                        .totalElements(collaboration.getTotalElements())
+                        .totalPages(collaboration.getTotalPages())
                         .build();
 
         return ResponseEntity.ok(
