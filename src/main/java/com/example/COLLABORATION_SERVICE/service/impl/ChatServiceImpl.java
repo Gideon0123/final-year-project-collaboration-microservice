@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -301,5 +302,35 @@ public class ChatServiceImpl implements ChatService {
                 );
 
         return new PagedResponse<>(responsePage);
+    }
+
+    @Override
+    public void deliverOfflineMessages(Long userId) {
+        List<Message> pendingMessages = messageRepository.findByReceiverIdAndStatus(
+                userId,
+                MessageStatus.SENT
+        );
+
+        if (pendingMessages.isEmpty()) {
+            return;
+        }
+
+        for (Message message : pendingMessages) {
+
+            message.setStatus(MessageStatus.DELIVERED);
+            messageRepository.save(message);
+
+            DeliveryReceiptResponse response = DeliveryReceiptResponse.builder()
+                    .messageId(message.getId())
+                    .status(MessageStatus.DELIVERED)
+                    .receiverId(message.getReceiverId())
+                    .build();
+
+            messagingTemplate.convertAndSendToUser(
+                    message.getSenderId().toString(),
+                    "/queue/delivered",
+                    response
+            );
+        }
     }
 }

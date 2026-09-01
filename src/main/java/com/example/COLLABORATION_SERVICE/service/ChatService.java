@@ -18,4 +18,5 @@ public interface ChatService {
             int size,
             Principal principal
     );
+    void deliverOfflineMessages(Long userId);
 }
