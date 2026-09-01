@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -155,5 +156,47 @@ public class ChatServiceImpl implements ChatService {
                 "/queue/read",
                 response
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatMessageResponse> getConversationMessages(
+            Long conversationId,
+            Principal principal
+    ) {
+
+        Long userId = getAuthenticatedUserId(principal);
+
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Conversation not found"
+                ));
+
+        if (!conversation.getParticipantOneId().equals(userId)
+                && !conversation.getParticipantTwoId().equals(userId)) {
+
+            throw new AccessDeniedException(
+                    "You are not a participant in this conversation"
+            );
+        }
+
+        List<Message> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                conversationId
+        );
+
+        return messages.stream()
+                .map(message ->
+                        ChatMessageResponse.builder()
+                                .id(message.getId())
+                                .conversationId(conversation.getId())
+                                .senderId(message.getSenderId())
+                                .receiverId(message.getReceiverId())
+                                .content(message.getContent())
+                                .type(message.getType())
+                                .status(message.getStatus())
+                                .createdAt(message.getCreatedAt())
+                                .build()
+                )
+                .toList();
     }
 }
