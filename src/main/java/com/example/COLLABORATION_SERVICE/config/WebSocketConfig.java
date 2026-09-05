@@ -1,58 +1,28 @@
 package com.example.COLLABORATION_SERVICE.config;
 
-import com.example.COLLABORATION_SERVICE.component.WebSocketHandshakeInterceptor;
-import com.example.COLLABORATION_SERVICE.security.JwtChannelInterceptor;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.ChannelRegistration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 @Configuration
-@EnableWebSocketMessageBroker
-@RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+@EnableWebSocket
+public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final JwtChannelInterceptor jwtChannelInterceptor;
-    private final WebSocketHandshakeInterceptor webSocketHandshakeInterceptor;
-
-    @Override
-    public void registerStompEndpoints(
-            StompEndpointRegistry registry
-    ) {
-        registry.addEndpoint("/ws")
-                .addInterceptors(webSocketHandshakeInterceptor)
-                .setAllowedOriginPatterns("http://localhost:3000");
+    @Bean
+    public ChatWebSocketHandler chatWebSocketHandler() {
+        return new ChatWebSocketHandler();
     }
 
     @Override
-    public void configureMessageBroker(
-            MessageBrokerRegistry registry
-    ) {
-        registry.setApplicationDestinationPrefixes(
-                "/app"
-        );
-
-        registry.setUserDestinationPrefix(
-                "/user"
-        );
-
-        registry.enableSimpleBroker(
-                "/topic",
-                "/queue"
-        );
-    }
-
-    @Override
-    public void configureClientInboundChannel(
-            ChannelRegistration registration
+    public void registerWebSocketHandlers(
+            WebSocketHandlerRegistry registry
     ) {
 
-        registration.interceptors(
-                jwtChannelInterceptor
-        );
+        registry.addHandler(
+                chatWebSocketHandler(),
+                "/ws"
+        ).setAllowedOriginPatterns("*");
     }
 }
-//    ws://localhost:8086/ws

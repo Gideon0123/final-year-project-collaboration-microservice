@@ -4,6 +4,7 @@ import com.example.COLLABORATION_SERVICE.enums.MessageStatus;
 import com.example.COLLABORATION_SERVICE.enums.MessageType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Message extends BaseEntity {
 
     @Id
