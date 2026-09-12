@@ -2,6 +2,7 @@ package com.example.COLLABORATION_SERVICE.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
@@ -14,21 +15,25 @@ public class RedisSerializerConfig {
     @Bean
     public GenericJackson2JsonRedisSerializer redisSerializer() {
 
-        ObjectMapper mapper = new ObjectMapper();
+        BasicPolymorphicTypeValidator typeValidator =
+                BasicPolymorphicTypeValidator.builder()
+                        .allowIfSubType("com.example.COLLABORATION_SERVICE")
+                        .allowIfSubType("java.util")
+                        .build();
 
-        mapper.registerModule(new JavaTimeModule());
+        ObjectMapper mapper = JsonMapper.builder()
+                .polymorphicTypeValidator(typeValidator)
+                .addModule(new JavaTimeModule())
+                .build();
 
         mapper.disable(
                 SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
         );
 
-        mapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder()
-                        .allowIfSubType(Object.class)
-                        .build(),
-                ObjectMapper.DefaultTyping.NON_FINAL
-        );
-
-        return new GenericJackson2JsonRedisSerializer(mapper);
+        return GenericJackson2JsonRedisSerializer.builder()
+                .objectMapper(mapper)
+                .defaultTyping(true)
+                .typeHintPropertyName("@class")
+                .build();
     }
 }

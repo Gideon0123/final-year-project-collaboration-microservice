@@ -34,7 +34,6 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class CollaborationServiceImpl implements CollaborationService {
 
     private final CollaborationRequestRepository requestRepository;
