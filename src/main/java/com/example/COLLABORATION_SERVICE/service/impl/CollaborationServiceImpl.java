@@ -17,7 +17,11 @@ import com.example.COLLABORATION_SERVICE.publisher.CollaborationProducer;
 import com.example.COLLABORATION_SERVICE.repository.CollaborationConnectionRepository;
 import com.example.COLLABORATION_SERVICE.repository.CollaborationRequestRepository;
 import com.example.COLLABORATION_SERVICE.service.CollaborationService;
+import com.example.COLLABORATION_SERVICE.utils.CacheNames;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -55,6 +59,18 @@ public class CollaborationServiceImpl implements CollaborationService {
 
     @Transactional
     @Override
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = CacheNames.COLLABORATION_REQUESTS,
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = CacheNames.RESEARCHER_PROFILES,
+                            allEntries = true
+                    )
+            }
+    )
     public CollaborationRequestResponse sendRequest(
             Long senderId,
             SendRequestDto dto
@@ -104,6 +120,22 @@ public class CollaborationServiceImpl implements CollaborationService {
     }
 
     @Override
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = CacheNames.COLLABORATION_REQUESTS,
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = CacheNames.COLLABORATION_CONNECTIONS,
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = CacheNames.RESEARCHER_PROFILES,
+                            allEntries = true
+                    )
+            }
+    )
     public CollaborationRequestResponse acceptRequest(
             Long requestId,
             Long currentUserId
@@ -144,6 +176,18 @@ public class CollaborationServiceImpl implements CollaborationService {
     }
 
     @Override
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = CacheNames.COLLABORATION_REQUESTS,
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = CacheNames.RESEARCHER_PROFILES,
+                            allEntries = true
+                    )
+            }
+    )
     public CollaborationRequestResponse rejectRequest(
             Long requestId,
             Long currentUserId
@@ -185,6 +229,11 @@ public class CollaborationServiceImpl implements CollaborationService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.COLLABORATION_REQUESTS,
+            key = "T(com.example.COLLABORATION_SERVICE.utils.CacheKeys)"
+                    + ".sentRequests(#userId, #page, #size, #sortBy, #sortDirection)"
+    )
     public PagedResponse<CollaborationRequestResponse> getSentRequests(
             Long userId,
             int page,
@@ -203,6 +252,11 @@ public class CollaborationServiceImpl implements CollaborationService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.COLLABORATION_REQUESTS,
+            key = "T(com.example.COLLABORATION_SERVICE.utils.CacheKeys)"
+                    + ".receivedRequests(#userId, #page, #size, #sortBy, #sortDirection)"
+    )
     public PagedResponse<CollaborationRequestResponse> getReceivedRequests(
             Long userId,
             int page,
@@ -220,6 +274,18 @@ public class CollaborationServiceImpl implements CollaborationService {
     }
 
     @Override
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = CacheNames.COLLABORATION_REQUESTS,
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = CacheNames.RESEARCHER_PROFILES,
+                            allEntries = true
+                    )
+            }
+    )
     public void cancelRequest(
             Long requestId,
             Long currentUserId
@@ -240,6 +306,11 @@ public class CollaborationServiceImpl implements CollaborationService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.COLLABORATION_CONNECTIONS,
+            key = "T(com.example.COLLABORATION_SERVICE.utils.CacheKeys)"
+                    + ".connections(#userId, #page, #size)"
+    )
     public PagedResponse<ConnectionResponse> getConnections(
             Long userId,
             int page,
@@ -255,6 +326,28 @@ public class CollaborationServiceImpl implements CollaborationService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.RESEARCHER_SEARCH,
+            key = "T(com.example.COLLABORATION_SERVICE.utils.CacheKeys)"
+                    + ".researcherSearch("
+                    + "#keyword, "
+                    + "#id, "
+                    + "#firstName, "
+                    + "#lastName, "
+                    + "#username, "
+                    + "#email, "
+                    + "#phoneNo, "
+                    + "#role, "
+                    + "#status, "
+                    + "#emailVerified, "
+                    + "#accountNonLocked, "
+                    + "#createdAfter, "
+                    + "#createdBefore, "
+                    + "#page, "
+                    + "#size, "
+                    + "#sortBy"
+                    + ")"
+    )
     public ApiResponse<PagedResponse<UserProfileResponse>> searchResearchers(
             String keyword,
             Long id,
@@ -294,7 +387,19 @@ public class CollaborationServiceImpl implements CollaborationService {
         );
     }
 
+    @Transactional(readOnly = true)
     @Override
+    @Cacheable(
+            value = CacheNames.RESEARCHER_PROFILES,
+            key = "T(com.example.COLLABORATION_SERVICE.utils.CacheKeys)"
+                    + ".researcherProfile("
+                    + "#currentUserId, "
+                    + "#researcherId, "
+                    + "#page, "
+                    + "#size, "
+                    + "#sortBy"
+                    + ")"
+    )
     public ResearcherProfileResponse getResearcherProfile(
             Long currentUserId,
             Long researcherId,
