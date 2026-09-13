@@ -6,6 +6,8 @@ import com.example.COLLABORATION_SERVICE.entity.RequestFingerprint;
 import com.example.COLLABORATION_SERVICE.enums.IdempotencyState;
 import com.example.COLLABORATION_SERVICE.enums.IdempotencyStatus;
 import com.example.COLLABORATION_SERVICE.repository.IdempotencyRepository;
+import com.example.COLLABORATION_SERVICE.utils.IdempotencyProperties;
+import com.example.COLLABORATION_SERVICE.utils.IdempotencyStateResolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
