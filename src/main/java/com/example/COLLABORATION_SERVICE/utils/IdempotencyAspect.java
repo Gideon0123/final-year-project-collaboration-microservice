@@ -2,6 +2,7 @@ package com.example.COLLABORATION_SERVICE.utils;
 
 import com.example.COLLABORATION_SERVICE.entity.IdempotencyResult;
 import com.example.COLLABORATION_SERVICE.entity.RequestFingerprint;
+import com.example.COLLABORATION_SERVICE.exception.MissingIdempotencyKeyException;
 import com.example.COLLABORATION_SERVICE.service.CurrentUserService;
 import com.example.COLLABORATION_SERVICE.service.IdempotencyService;
 import com.fasterxml.jackson.core.JsonProcessingException;

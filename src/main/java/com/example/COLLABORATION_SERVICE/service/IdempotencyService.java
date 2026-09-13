@@ -5,6 +5,8 @@ import com.example.COLLABORATION_SERVICE.entity.IdempotencyResult;
 import com.example.COLLABORATION_SERVICE.entity.RequestFingerprint;
 import com.example.COLLABORATION_SERVICE.enums.IdempotencyState;
 import com.example.COLLABORATION_SERVICE.enums.IdempotencyStatus;
+import com.example.COLLABORATION_SERVICE.exception.IdempotencyConflictException;
+import com.example.COLLABORATION_SERVICE.exception.IdempotencyProcessingException;
 import com.example.COLLABORATION_SERVICE.repository.IdempotencyRepository;
 import com.example.COLLABORATION_SERVICE.utils.IdempotencyProperties;
 import com.example.COLLABORATION_SERVICE.utils.IdempotencyStateResolver;

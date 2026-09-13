@@ -5,6 +5,7 @@ import com.example.COLLABORATION_SERVICE.enums.AccountStatus;
 import com.example.COLLABORATION_SERVICE.enums.Role;
 import com.example.COLLABORATION_SERVICE.payload.PagedResponse;
 import com.example.COLLABORATION_SERVICE.service.CollaborationService;
+import com.example.COLLABORATION_SERVICE.utils.Idempotent;
 import com.example.COLLABORATION_SERVICE.utils.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -24,6 +25,7 @@ public class CollaborationController {
     private final CollaborationService collaborationService;
 
     @PostMapping("/request")
+    @Idempotent(ttlMinutes = 2)
     public ResponseEntity<ApiResponse<CollaborationRequestResponse>> sendRequest(
             @RequestHeader("X-USER-ID") Long senderId,
             @Valid @RequestBody SendRequestDto dto,
@@ -46,6 +48,7 @@ public class CollaborationController {
     }
 
     @PutMapping("/{requestId}/accept")
+    @Idempotent(ttlMinutes = 2)
     public ResponseEntity<ApiResponse<CollaborationRequestResponse>> acceptRequest(
             @PathVariable Long requestId,
             @RequestHeader("X-USER-ID") Long currentUserId,
@@ -70,6 +73,7 @@ public class CollaborationController {
     }
 
     @PutMapping("/{requestId}/reject")
+    @Idempotent(ttlMinutes = 2)
     public ResponseEntity<ApiResponse<CollaborationRequestResponse>> rejectRequest(
             @PathVariable Long requestId,
             @RequestHeader("X-USER-ID") Long currentUserId,
@@ -174,6 +178,7 @@ public class CollaborationController {
     }
 
     @DeleteMapping("/{requestId}")
+    @Idempotent(ttlMinutes = 2)
     public ResponseEntity<ApiResponse<Void>> cancelRequest(
             @PathVariable Long requestId,
             @RequestHeader("X-USER-ID") Long currentUserId,
