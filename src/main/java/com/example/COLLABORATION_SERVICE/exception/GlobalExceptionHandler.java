@@ -27,6 +27,30 @@ public class GlobalExceptionHandler {
         return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), request);
     }
 
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIdempotencyConflict(
+            IdempotencyConflictException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(ex.getMessage(), HttpStatus.CONFLICT.value(), request);
+    }
+
+    @ExceptionHandler(IdempotencyProcessingException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIdempotencyProcessing(
+            IdempotencyProcessingException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
+    }
+
+    @ExceptionHandler(MissingIdempotencyKeyException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMissingIdempotencyKey(
+            MissingIdempotencyKeyException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value(), request);
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ApiResponse<Object>> handleUnauthorizedReview(
             InvalidTokenException ex,
