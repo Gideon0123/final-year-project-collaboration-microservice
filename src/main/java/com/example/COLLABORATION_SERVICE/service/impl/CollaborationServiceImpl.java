@@ -18,6 +18,7 @@ import com.example.COLLABORATION_SERVICE.repository.CollaborationConnectionRepos
 import com.example.COLLABORATION_SERVICE.repository.CollaborationRequestRepository;
 import com.example.COLLABORATION_SERVICE.service.CollaborationService;
 import com.example.COLLABORATION_SERVICE.utils.CacheNames;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -56,6 +57,17 @@ public class CollaborationServiceImpl implements CollaborationService {
         return PageRequest.of(page, size, sort);
     }
 
+    private void validateReceiverExists(Long receiverId) {
+
+        try {
+            authClient.getUser(receiverId);
+        } catch (FeignException.NotFound ex) {
+            throw new ResourceNotFoundException(
+                    "User with ID " + receiverId + " not found"
+            );
+        }
+    }
+
     @Transactional
     @Override
     @Caching(
@@ -74,28 +86,39 @@ public class CollaborationServiceImpl implements CollaborationService {
             Long senderId,
             SendRequestDto dto
     ) {
-        if(senderId.equals(dto.receiverId())) {
-            throw new BadRequestException("You cannot collaborate with yourself");
+
+        if (senderId.equals(dto.receiverId())) {
+            throw new BadRequestException(
+                    "You cannot collaborate with yourself"
+            );
         }
 
-        if(requestRepository.existsBySenderIdAndReceiverId(
-                senderId, dto.receiverId()
+        validateReceiverExists(dto.receiverId());
+
+//        if (Objects.equals(receiver.getRole(), "ADMIN")) {
+//            throw new BadRequestException(
+//                    "You can not collaborate with admins"
+//            );
+//        }
+
+        if (requestRepository.existsBySenderIdAndReceiverId(
+                senderId,
+                dto.receiverId()
         )) {
-            throw new BadRequestException("Request already exists");
+            throw new BadRequestException(
+                    "Request already exists"
+            );
         }
 
         boolean alreadyConnected = connectionRepository.connectionExists(
                 senderId,
                 dto.receiverId()
         );
-//                ||
-//                connectionRepository.existsByUserOneIdAndUserTwoId(
-//                        dto.receiverId(),
-//                        senderId
-//                );
 
-        if(alreadyConnected) {
-            throw new BadRequestException("Already connected");
+        if (alreadyConnected) {
+            throw new BadRequestException(
+                    "Already connected"
+            );
         }
 
         CollaborationRequest request = CollaborationRequest.builder()
@@ -107,14 +130,6 @@ public class CollaborationServiceImpl implements CollaborationService {
 
         request = requestRepository.save(request);
 
-//        producer.publishRequestSent(
-//                CollaborationRequestSentEvent
-//                        .builder()
-//                        .senderId(senderId)
-//                        .receiverId(dto.receiverId())
-//                        .message(dto.message())
-//                        .build()
-//        );
         return mapper.toResponse(request);
     }
 
