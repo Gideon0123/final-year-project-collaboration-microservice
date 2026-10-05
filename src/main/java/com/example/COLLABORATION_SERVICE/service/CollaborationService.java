@@ -82,4 +82,9 @@ public interface CollaborationService {
             int size,
             String sortBy
     );
+
+    boolean areConnected(
+            Long userId,
+            Long otherUserId
+    );
 }

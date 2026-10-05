@@ -457,4 +457,24 @@ public class CollaborationServiceImpl implements CollaborationService {
                 .pendingRequest(pending)
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean areConnected(
+            Long userId,
+            Long otherUserId
+    ) {
+
+        // Use the repository that already owns
+        // accepted collaboration connections.
+
+        return connectionRepository.connectionExists(
+                userId,
+                otherUserId
+        );
+
+        // Example:
+        // return connectionRepository.existsBy...;
+//        return false;
+    }
 }
