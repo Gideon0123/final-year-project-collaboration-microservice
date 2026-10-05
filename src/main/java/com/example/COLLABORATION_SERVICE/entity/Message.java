@@ -1,43 +1,59 @@
 package com.example.COLLABORATION_SERVICE.entity;
 
-import com.example.COLLABORATION_SERVICE.enums.MessageStatus;
-import com.example.COLLABORATION_SERVICE.enums.MessageType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "messages")
+@Table(
+        name = "messages",
+        indexes = {
+                @Index(
+                        name = "idx_message_conversation_created",
+                        columnList = "conversation_id, created_at"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
-public class Message extends BaseEntity {
+public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "conversation_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "conversation_id",
+            nullable = false
+    )
     private Conversation conversation;
 
+    @Column(
+            name = "sender_id",
+            nullable = false
+    )
     private Long senderId;
 
-    private Long receiverId;
-
-    @Column(columnDefinition = "TEXT")
+    @Column(
+            nullable = false,
+            columnDefinition = "TEXT"
+    )
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    private MessageType type;
+    @Column(
+            name = "created_at",
+            nullable = false,
+            updatable = false
+    )
+    private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    private MessageStatus status;
-
-    private LocalDateTime readAt;
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }

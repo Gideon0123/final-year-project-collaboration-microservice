@@ -42,8 +42,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers(
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/collaboration/ws/**",
+                                "/collaboration/ws"
                         )
+//                        .requestMatchers("/collaboration/ws/**").permitAll()
                         .permitAll()
 
                         .anyRequest()

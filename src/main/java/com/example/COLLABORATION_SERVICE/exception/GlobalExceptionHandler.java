@@ -59,38 +59,6 @@ public class GlobalExceptionHandler {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
-//    @ExceptionHandler(InvalidReviewStateException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleInvalidReview(
-//            InvalidReviewStateException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
-//    }
-
-//    @ExceptionHandler(DuplicateReviewerAssignmentException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleDuplicateReviewer(
-//            DuplicateReviewerAssignmentException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.CONFLICT.value(), request);
-//    }
-
-//    @ExceptionHandler(MaximumReviewersReachedException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleMaximumReviewersReached(
-//            MaximumReviewersReachedException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
-//    }
-
-//    @ExceptionHandler(StorageException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleStorageError(
-//            StorageException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
-//    }
-
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleUserNotFound(
             UserNotFoundException ex,
@@ -99,25 +67,10 @@ public class GlobalExceptionHandler {
         return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value(), request);
     }
 
-//    @ExceptionHandler(ReviewerNotFoundException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleReviewerNotFound(
-//            ReviewerNotFoundException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value(), request);
-//    }
 
 //    @ExceptionHandler(ResearchPaperNotFoundException.class)
 //    public ResponseEntity<ApiResponse<Object>> handleResearchNotFound(
 //            ResearchPaperNotFoundException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value(), request);
-//    }
-
-//    @ExceptionHandler(ReviewNotFoundException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleMissingReview(
-//            ReviewNotFoundException ex,
 //            HttpServletRequest request
 //    ) {
 //        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value(), request);
@@ -154,22 +107,6 @@ public class GlobalExceptionHandler {
     ) {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
-
-//    @ExceptionHandler(ReviewerNotEligibleException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleIneligibleReviewer(
-//            ReviewerNotEligibleException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
-//    }
-
-//    @ExceptionHandler(ReviewAlreadyCompletedException.class)
-//    public ResponseEntity<ApiResponse<Object>> handleCompletedReview(
-//            ReviewAlreadyCompletedException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
-//    }
 
     @ExceptionHandler(InvalidOperationException.class)
     public ResponseEntity<ApiResponse<Object>> handleInvalidOperation(

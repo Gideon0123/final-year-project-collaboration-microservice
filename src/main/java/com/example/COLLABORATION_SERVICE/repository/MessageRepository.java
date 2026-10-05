@@ -9,21 +9,21 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
-public interface MessageRepository extends JpaRepository<Message, Long> {
-
-    Page<Message> findByConversationId(
-            Long conversationId,
-            Pageable pageable
-    );
-
-    List<Message> findByConversationIdOrderByCreatedAtAsc(
-            Long conversationId
-    );
-
-    List<Message> findByReceiverIdAndStatus(
-            Long receiverId,
-            MessageStatus status
-    );
-
-}
+//@Repository
+//public interface MessageRepository extends JpaRepository<Message, Long> {
+//
+//    Page<Message> findByConversationId(
+//            Long conversationId,
+//            Pageable pageable
+//    );
+//
+//    List<Message> findByConversationIdOrderByCreatedAtAsc(
+//            Long conversationId
+//    );
+//
+//    List<Message> findByReceiverIdAndStatus(
+//            Long receiverId,
+//            MessageStatus status
+//    );
+//
+//}
